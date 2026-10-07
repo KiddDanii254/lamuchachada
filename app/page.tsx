@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
@@ -17,6 +18,8 @@ type Clip = {
   id: string;
   title: string;
   game: string | null;
+  description: string | null;
+  video_url: string;
   created_at: string;
 };
 
@@ -31,6 +34,7 @@ export default function Home() {
   const [user, setUser] = useState<User | null>(null);
   const [perfil, setPerfil] = useState<Perfil | null>(null);
   const [clips, setClips] = useState<Clip[]>([]);
+  const [urls, setUrls] = useState<Record<string, string>>({});
   const [cargando, setCargando] = useState(true);
 
   // 1) Saber si hay sesión; si no la hay, ir al login
@@ -45,7 +49,7 @@ export default function Home() {
     return () => data.subscription.unsubscribe();
   }, [router]);
 
-  // 2) Con sesión, cargar el perfil y los clips
+  // 2) Con sesión, cargar perfil, clips y enlaces de los videos
   useEffect(() => {
     if (!user) return;
     const idUsuario = user.id;
@@ -60,9 +64,25 @@ export default function Home() {
 
       const { data: c } = await supabase
         .from("clips")
-        .select("id, title, game, created_at")
+        .select("id, title, game, description, video_url, created_at")
         .order("created_at", { ascending: false });
-      setClips((c as Clip[]) ?? []);
+      const lista = (c as Clip[]) ?? [];
+      setClips(lista);
+
+      // Enlaces temporales (duran 1 hora) para reproducir los videos
+      if (lista.length > 0) {
+        const { data: firmadas } = await supabase.storage
+          .from("clips")
+          .createSignedUrls(
+            lista.map((x) => x.video_url),
+            3600
+          );
+        const mapa: Record<string, string> = {};
+        for (const f of firmadas ?? []) {
+          if (f.path && f.signedUrl) mapa[f.path] = f.signedUrl;
+        }
+        setUrls(mapa);
+      }
 
       setCargando(false);
     }
@@ -84,8 +104,7 @@ export default function Home() {
 
   const rol: Rol = perfil?.role ?? "guest";
   const puedeSubir = rol === "admin" || rol === "uploader";
-  const nombre =
-    perfil?.display_name ?? user?.email ?? "Sin nombre";
+  const nombre = perfil?.display_name ?? user?.email ?? "Sin nombre";
 
   return (
     <main className="min-h-screen bg-black text-white">
@@ -120,13 +139,12 @@ export default function Home() {
           <h2 className="text-xl font-semibold">Galería</h2>
 
           {puedeSubir && (
-            <button
-              disabled
-              title="Lo activamos en el siguiente paso"
-              className="cursor-not-allowed rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold opacity-50"
+            <Link
+              href="/subir"
+              className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold transition hover:bg-green-700"
             >
-              Subir clip (próximamente)
-            </button>
+              Subir clip
+            </Link>
           )}
         </div>
 
@@ -137,12 +155,32 @@ export default function Home() {
             {clips.map((clip) => (
               <li
                 key={clip.id}
-                className="rounded-xl border border-white/10 bg-white/5 p-4"
+                className="overflow-hidden rounded-xl border border-white/10 bg-white/5"
               >
-                <p className="font-semibold">{clip.title}</p>
-                {clip.game && (
-                  <p className="text-sm text-gray-400">{clip.game}</p>
+                {urls[clip.video_url] ? (
+                  <video
+                    src={`${urls[clip.video_url]}#t=0.1`}
+                    controls
+                    preload="metadata"
+                    playsInline
+                    className="aspect-video w-full bg-black"
+                  />
+                ) : (
+                  <div className="flex aspect-video w-full items-center justify-center bg-black text-sm text-gray-500">
+                    Video no disponible
+                  </div>
                 )}
+                <div className="p-4">
+                  <p className="font-semibold">{clip.title}</p>
+                  {clip.game && (
+                    <p className="text-sm text-gray-400">{clip.game}</p>
+                  )}
+                  {clip.description && (
+                    <p className="mt-1 text-sm text-gray-500">
+                      {clip.description}
+                    </p>
+                  )}
+                </div>
               </li>
             ))}
           </ul>
