@@ -1,29 +1,28 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
+import Fondo from "@/components/Fondo";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const pricedown = localFont({
+  src: "./fonts/pricedown-bl.otf",
+  variable: "--font-pricedown",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
   title: "La Muchachada",
-  description: "Una pagina mas??",
+  description: "Clips y buenos momentos con los amigos",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html
-      lang="es"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html lang="es">
+      <body className={`${pricedown.variable} antialiased`}>
+        <Fondo />
+        {children}
+      </body>
     </html>
   );
 }

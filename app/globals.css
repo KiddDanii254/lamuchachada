@@ -1,26 +1,100 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --fondo: #07060d;
+  --texto: #f5f3ff;
+  --rosa: #ff2e93;
+  --naranja: #ff9a3c;
+  --morado: #7c3aed;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--fondo);
+  color: var(--texto);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Fuente de títulos: Pricedown Bl */
+.font-display {
+  font-family: var(--font-pricedown), Impact, "Arial Black", sans-serif;
+  letter-spacing: 0.03em;
+  font-weight: 400;
+}
+
+/* Texto con degradado fijo */
+.texto-degradado {
+  background: linear-gradient(90deg, var(--rosa), var(--naranja));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Texto con degradado que se mueve */
+.texto-animado {
+  background: linear-gradient(
+    90deg,
+    var(--rosa),
+    var(--naranja),
+    var(--morado),
+    var(--rosa)
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: brillo 6s linear infinite;
+}
+
+.fondo-degradado {
+  background: linear-gradient(135deg, var(--rosa), var(--naranja));
+}
+
+/* Tarjeta de vidrio */
+.tarjeta {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+.tarjeta:hover {
+  border-color: rgba(255, 46, 147, 0.6);
+  box-shadow: 0 12px 40px -12px rgba(255, 46, 147, 0.55);
+}
+
+/* Botón principal */
+.boton-marca {
+  background: linear-gradient(135deg, var(--rosa), var(--naranja));
+  color: white;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.boton-marca:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px -8px rgba(255, 46, 147, 0.7);
+}
+
+/* Animaciones */
+@keyframes brillo {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+@keyframes blob {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(60px, -40px) scale(1.15); }
+  66% { transform: translate(-40px, 50px) scale(0.9); }
+}
+.animate-blob { animation: blob 18s ease-in-out infinite; }
+.animate-blob-lento { animation: blob 28s ease-in-out infinite reverse; }
+
+/* Respeta a quienes desactivan las animaciones en su dispositivo */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
 }
