@@ -4,7 +4,7 @@ export const SITIO = {
 
 // Pega aquí el enlace completo de cada red. Deja "" las que no uses: no se mostrarán.
 export const REDES = {
-  tiktok: "", // ej: "https://www.tiktok.com/@tuusuario"
+  tiktok: "https://www.tiktok.com/@acoplevoyz", // ej: "https://www.tiktok.com/@tuusuario"
   instagram: "",
   discord: "", // ej: enlace de invitación a tu servidor
   youtube: "",
@@ -13,4 +13,4 @@ export const REDES = {
 };
 
 // Tu usuario de TikTok SIN la @ (ej: "tuusuario"). Si queda vacío, no se muestra la sección.
-export const TIKTOK_USUARIO = "";
+export const TIKTOK_USUARIO = "acoplevoyz";

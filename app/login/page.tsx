@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
-import { FaGoogle, FaDiscord, FaGamepad } from "react-icons/fa6";
+import { FaGoogle, FaDiscord } from "react-icons/fa6";
 import { supabase } from "@/lib/supabase";
 
 export default function Login() {
@@ -24,7 +25,7 @@ export default function Login() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-6">
+    <main className="flex min-h-screen items-center justify-center px-6 py-10">
       <motion.div
         initial={{ opacity: 0, y: 30, scale: 0.96 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -32,17 +33,18 @@ export default function Login() {
         className="tarjeta w-full max-w-sm rounded-3xl p-8 text-center"
       >
         <motion.div
-          animate={{ y: [0, -8, 0] }}
-          transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
-          className="fondo-degradado mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl text-white shadow-[0_0_30px_#ff2e9388]"
+          animate={{ y: [0, -10, 0] }}
+          transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+          className="mx-auto w-56"
         >
-          <FaGamepad size={32} />
+          <Image
+            src="/logo.png"
+            alt="La Muchachada DX"
+            width={448}
+            height={448}
+            className="animate-pulso-neon h-auto w-full"
+          />
         </motion.div>
-
-        <h1 className="font-display text-5xl leading-none">
-          <span className="block text-white">LA</span>
-          <span className="texto-animado block">MUCHACHADA</span>
-        </h1>
 
         <p className="mt-4 text-sm text-gray-400">
           Entra con tu cuenta para ver los clips de la muchachada.

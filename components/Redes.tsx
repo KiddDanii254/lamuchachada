@@ -31,7 +31,7 @@ export default function Redes() {
             rel="noopener noreferrer"
             aria-label={nombre}
             title={nombre}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/5 text-lg text-white transition hover:-translate-y-1 hover:border-transparent hover:bg-[#ff2e93] hover:shadow-[0_8px_24px_-6px_#ff2e93]"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/5 text-lg text-white transition hover:-translate-y-1 hover:border-transparent hover:bg-[#6dff00] hover:text-black hover:shadow-[0_8px_24px_-6px_#6dff00]"
           >
             <Icono />
           </a>

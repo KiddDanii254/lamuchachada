@@ -109,7 +109,7 @@ export default function Subir() {
     "w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-white outline-none focus:border-white/50";
 
   return (
-    <main className="min-h-screen bg-black px-6 py-10 text-white">
+    <main className="min-h-screen px-6 py-10 text-white">
       <div className="mx-auto max-w-lg">
         <Link href="/" className="text-sm text-gray-400 underline">
           ← Volver a la galería
@@ -192,7 +192,7 @@ export default function Subir() {
           <button
             type="submit"
             disabled={subiendo || !archivo}
-            className="rounded-lg bg-green-600 px-4 py-3 font-semibold transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="boton-marca rounded-lg px-4 py-3 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {subiendo ? "Subiendo..." : "Subir clip"}
           </button>

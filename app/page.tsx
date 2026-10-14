@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
@@ -117,11 +118,7 @@ export default function Home() {
   if (cargando) {
     return (
       <main className="flex min-h-screen items-center justify-center">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-          className="h-10 w-10 rounded-full border-4 border-white/20 border-t-[#ff2e93]"
-        />
+        <div className="cargador" />
       </main>
     );
   }
@@ -140,7 +137,7 @@ export default function Home() {
   return (
     <main className="min-h-screen">
       {/* Barra superior */}
-      <header className="sticky top-0 z-20 border-b border-white/10 bg-[#07060d]/70 backdrop-blur-xl">
+      <header className="sticky top-0 z-20 border-b border-white/10 bg-[#040604]/70 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
           <Logo />
 
@@ -149,7 +146,7 @@ export default function Home() {
               <img
                 src={perfil.avatar_url}
                 alt=""
-                className="h-9 w-9 rounded-full ring-2 ring-[#ff2e93]/60"
+                className="anillo h-9 w-9 rounded-full"
               />
             )}
             <div className="hidden text-right sm:block">
@@ -168,28 +165,36 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Portada */}
-      <section className="mx-auto max-w-6xl px-6 pb-6 pt-14 text-center">
-        <motion.h1
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="font-display text-5xl sm:text-7xl"
+      {/* Portada con el banner */}
+      <section className="mx-auto max-w-6xl px-6 pb-6 pt-12 text-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.7, ease: "easeOut" }}
+          className="mx-auto w-full max-w-xl"
         >
-          <span className="texto-animado">NUESTROS CLIPS</span>
-        </motion.h1>
+          <Image
+            src="/banner.png"
+            alt="La Muchachada"
+            width={1200}
+            height={320}
+            className="animate-pulso-neon h-auto w-full"
+          />
+        </motion.div>
+
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.15 }}
-          className="mx-auto mt-4 max-w-xl text-gray-400"
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="mx-auto mt-6 max-w-xl text-gray-400"
         >
           Los mejores momentos de la muchachada, en un solo lugar.
         </motion.p>
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
+          transition={{ duration: 0.6, delay: 0.35 }}
           className="mt-6 flex justify-center"
         >
           <Redes />
@@ -212,7 +217,7 @@ export default function Home() {
           {puedeSubir && (
             <Link
               href="/subir"
-              className="boton-marca inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold"
+              className="boton-marca inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm"
             >
               <FaPlus /> Subir clip
             </Link>
@@ -223,11 +228,7 @@ export default function Home() {
           <div className="mt-4 flex flex-wrap gap-2">
             <button
               onClick={() => setJuegoActivo(null)}
-              className={`rounded-full border px-4 py-1.5 text-sm transition ${
-                juegoActivo === null
-                  ? "border-transparent bg-[#ff2e93] text-white"
-                  : "border-white/15 text-gray-300 hover:bg-white/10"
-              }`}
+              className={`chip ${juegoActivo === null ? "chip-activo" : ""}`}
             >
               Todos
             </button>
@@ -235,11 +236,7 @@ export default function Home() {
               <button
                 key={j}
                 onClick={() => setJuegoActivo(j === juegoActivo ? null : j)}
-                className={`rounded-full border px-4 py-1.5 text-sm transition ${
-                  juegoActivo === j
-                    ? "border-transparent bg-[#ff2e93] text-white"
-                    : "border-white/15 text-gray-300 hover:bg-white/10"
-                }`}
+                className={`chip ${juegoActivo === j ? "chip-activo" : ""}`}
               >
                 {j}
               </button>
@@ -285,9 +282,7 @@ export default function Home() {
                 <div className="p-4">
                   <p className="text-lg font-semibold">{clip.title}</p>
                   {clip.game && (
-                    <span className="mt-2 inline-block rounded-full bg-[#ff2e93]/20 px-3 py-0.5 text-xs font-semibold text-[#ff7ab8]">
-                      {clip.game}
-                    </span>
+                    <span className="insignia mt-2">{clip.game}</span>
                   )}
                   {clip.description && (
                     <p className="mt-2 text-sm text-gray-400">
