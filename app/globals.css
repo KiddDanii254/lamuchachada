@@ -62,9 +62,8 @@ body {
 
 /* Tarjeta de vidrio con borde neón al pasar el mouse */
 .tarjeta {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(14, 20, 14, 0.75);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(12px);
   transition: border-color 0.3s, box-shadow 0.3s;
 }
 .tarjeta:hover,
@@ -167,7 +166,8 @@ body {
   0%, 100% { filter: drop-shadow(0 0 10px rgba(109, 255, 0, 0.45)); }
   50% { filter: drop-shadow(0 0 26px rgba(109, 255, 0, 0.9)); }
 }
-.animate-pulso-neon { animation: pulso-neon 3.5s ease-in-out infinite; }
+.animate-pulso-neon {
+  filter: drop-shadow(0 0 14px rgba(109, 255, 0, 0.55));}
 
 /* Respeta a quienes desactivan las animaciones en su dispositivo */
 @media (prefers-reduced-motion: reduce) {

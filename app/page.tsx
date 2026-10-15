@@ -9,6 +9,8 @@ import {
   FaPlus,
   FaMagnifyingGlass,
   FaRightFromBracket,
+  FaGear,
+  FaDownload,
 } from "react-icons/fa6";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
@@ -16,6 +18,8 @@ import Logo from "@/components/Logo";
 import Redes from "@/components/Redes";
 import Footer from "@/components/Footer";
 import TikTokFeed from "@/components/TikTokFeed";
+import Avatar from "@/components/Avatar";
+import ClipVideo from "@/components/ClipVideo";
 
 type Rol = "admin" | "uploader" | "guest";
 
@@ -45,7 +49,6 @@ export default function Home() {
   const [user, setUser] = useState<User | null>(null);
   const [perfil, setPerfil] = useState<Perfil | null>(null);
   const [clips, setClips] = useState<Clip[]>([]);
-  const [urls, setUrls] = useState<Record<string, string>>({});
   const [cargando, setCargando] = useState(true);
   const [busqueda, setBusqueda] = useState("");
   const [juegoActivo, setJuegoActivo] = useState<string | null>(null);
@@ -62,7 +65,7 @@ export default function Home() {
     return () => data.subscription.unsubscribe();
   }, [router]);
 
-  // 2) Con sesión, cargar perfil, clips y enlaces de los videos
+  // 2) Con sesión, cargar perfil y clips (los videos se cargan solos al hacer scroll)
   useEffect(() => {
     if (!user) return;
     const idUsuario = user.id;
@@ -79,22 +82,7 @@ export default function Home() {
         .from("clips")
         .select("id, title, game, description, video_url, created_at")
         .order("created_at", { ascending: false });
-      const lista = (c as Clip[]) ?? [];
-      setClips(lista);
-
-      if (lista.length > 0) {
-        const { data: firmadas } = await supabase.storage
-          .from("clips")
-          .createSignedUrls(
-            lista.map((x) => x.video_url),
-            3600
-          );
-        const mapa: Record<string, string> = {};
-        for (const f of firmadas ?? []) {
-          if (f.path && f.signedUrl) mapa[f.path] = f.signedUrl;
-        }
-        setUrls(mapa);
-      }
+      setClips((c as Clip[]) ?? []);
 
       setCargando(false);
     }
@@ -113,6 +101,22 @@ export default function Home() {
 
   async function salir() {
     await supabase.auth.signOut();
+  }
+
+  // Solo admin y uploader pueden descargar
+  async function descargar(clip: Clip) {
+    const extension = clip.video_url.split(".").pop() ?? "mp4";
+    const nombreArchivo = clip.title.replace(/[\\/:*?"<>|]/g, "");
+    const { data, error } = await supabase.storage
+      .from("clips")
+      .createSignedUrl(clip.video_url, 60, {
+        download: `${nombreArchivo}.${extension}`,
+      });
+    if (error || !data) {
+      alert("No se pudo preparar la descarga.");
+      return;
+    }
+    window.location.href = data.signedUrl;
   }
 
   if (cargando) {
@@ -137,18 +141,23 @@ export default function Home() {
   return (
     <main className="min-h-screen">
       {/* Barra superior */}
-      <header className="sticky top-0 z-20 border-b border-white/10 bg-[#040604]/70 backdrop-blur-xl">
+      <header className="sticky top-0 z-20 border-b border-white/10 bg-[#040604]/95">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
           <Logo />
 
           <div className="flex items-center gap-3">
-            {perfil?.avatar_url && (
-              <img
-                src={perfil.avatar_url}
-                alt=""
-                className="anillo h-9 w-9 rounded-full"
-              />
+            {puedeSubir && (
+              <Link
+                href="/panel"
+                title="Panel"
+                className="flex items-center gap-2 rounded-lg border border-white/20 px-3 py-2 text-sm transition hover:bg-white/10"
+              >
+                <FaGear />
+                <span className="hidden sm:inline">Panel</span>
+              </Link>
             )}
+
+            <Avatar url={perfil?.avatar_url ?? null} nombre={nombre} />
             <div className="hidden text-right sm:block">
               <p className="text-sm font-semibold">{nombre}</p>
               <p className="text-xs text-gray-400">{nombreRol[rol]}</p>
@@ -178,6 +187,7 @@ export default function Home() {
             alt="La Muchachada"
             width={1200}
             height={320}
+            sizes="(max-width: 640px) 100vw, 576px"
             className="animate-pulso-neon h-auto w-full"
           />
         </motion.div>
@@ -263,22 +273,9 @@ export default function Home() {
                 initial={{ opacity: 0, y: 28 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.45, delay: Math.min(i * 0.07, 0.5) }}
-                whileHover={{ y: -6 }}
                 className="tarjeta overflow-hidden rounded-2xl"
               >
-                {urls[clip.video_url] ? (
-                  <video
-                    src={`${urls[clip.video_url]}#t=0.1`}
-                    controls
-                    preload="metadata"
-                    playsInline
-                    className="aspect-video w-full bg-black"
-                  />
-                ) : (
-                  <div className="flex aspect-video w-full items-center justify-center bg-black text-sm text-gray-500">
-                    Video no disponible
-                  </div>
-                )}
+                <ClipVideo ruta={clip.video_url} puedeDescargar={puedeSubir} />
                 <div className="p-4">
                   <p className="text-lg font-semibold">{clip.title}</p>
                   {clip.game && (
@@ -288,6 +285,14 @@ export default function Home() {
                     <p className="mt-2 text-sm text-gray-400">
                       {clip.description}
                     </p>
+                  )}
+                  {puedeSubir && (
+                    <button
+                      onClick={() => descargar(clip)}
+                      className="mt-3 inline-flex items-center gap-2 text-xs text-gray-400 transition hover:text-[#6dff00]"
+                    >
+                      <FaDownload /> Descargar
+                    </button>
                   )}
                 </div>
               </motion.li>
