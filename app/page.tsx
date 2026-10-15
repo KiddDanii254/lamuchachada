@@ -188,6 +188,7 @@ export default function Home() {
             width={1200}
             height={320}
             sizes="(max-width: 640px) 100vw, 576px"
+            loading="eager"
             className="animate-pulso-neon h-auto w-full"
           />
         </motion.div>

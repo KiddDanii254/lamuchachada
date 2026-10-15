@@ -42,6 +42,7 @@ export default function Login() {
             alt="La Muchachada DX"
             width={448}
             height={448}
+            loading="eager"
             className="animate-pulso-neon h-auto w-full"
           />
         </motion.div>

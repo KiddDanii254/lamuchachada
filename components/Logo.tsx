@@ -9,6 +9,7 @@ export default function Logo() {
         alt="La Muchachada DX"
         width={48}
         height={48}
+        loading="eager"
         className="h-12 w-12 object-contain transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110"
         style={{ filter: "drop-shadow(0 0 8px rgba(109,255,0,0.6))" }}
       />
