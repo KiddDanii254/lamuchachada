@@ -10,8 +10,31 @@ const pricedown = localFont({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://lamuchachada.vercel.app"),
   title: "La Muchachada",
   description: "Clips y buenos momentos con los amigos",
+  openGraph: {
+    title: "La Muchachada DX",
+    description: "Clips y buenos momentos con los amigos",
+    url: "/",
+    siteName: "La Muchachada",
+    locale: "es_CL",
+    type: "website",
+    images: [
+      {
+        url: "/preview.png",
+        width: 600,
+        height: 600,
+        alt: "La Muchachada DX",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary",
+    title: "La Muchachada DX",
+    description: "Clips y buenos momentos con los amigos",
+    images: ["/preview.png"],
+  },
 };
 
 export default function RootLayout({

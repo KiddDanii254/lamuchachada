@@ -4,28 +4,14 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
-import {
-  FaArrowLeft,
-  FaTrashCan,
-  FaFilm,
-  FaUsers,
-  FaTiktok,
-} from "react-icons/fa6";
+import { FaArrowLeft, FaUsers, FaTiktok, FaDatabase } from "react-icons/fa6";
 import { supabase } from "@/lib/supabase";
 import Logo from "@/components/Logo";
 import Avatar from "@/components/Avatar";
 import TikTokAdmin from "@/components/TikTokAdmin";
+import SistemaAdmin from "@/components/SistemaAdmin";
 
 type Rol = "admin" | "uploader" | "guest";
-
-type Clip = {
-  id: string;
-  title: string;
-  game: string | null;
-  video_url: string;
-  uploaded_by: string;
-  created_at: string;
-};
 
 type Usuario = {
   id: string;
@@ -55,11 +41,9 @@ function fecha(iso: string) {
 export default function Panel() {
   const router = useRouter();
   const [miId, setMiId] = useState<string | null>(null);
-  const [rol, setRol] = useState<Rol | null>(null);
-  const [clips, setClips] = useState<Clip[]>([]);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
-  const [pestana, setPestana] = useState<"clips" | "usuarios" | "tiktok">(
-    "clips"
+  const [pestana, setPestana] = useState<"usuarios" | "tiktok" | "sistema">(
+    "usuarios"
   );
   const [cargando, setCargando] = useState(true);
   const [aviso, setAviso] = useState<Aviso | null>(null);
@@ -74,89 +58,29 @@ export default function Panel() {
         return;
       }
 
+      // Solo el admin puede estar aquí
       const { data: perfil } = await supabase
         .from("profiles")
         .select("role")
         .eq("id", sesion.user.id)
         .single();
-      const miRol = (perfil?.role ?? "guest") as Rol;
-      if (miRol !== "admin" && miRol !== "uploader") {
+      if (perfil?.role !== "admin") {
         router.replace("/");
         return;
       }
 
       setMiId(sesion.user.id);
-      setRol(miRol);
 
-      // El uploader solo ve sus clips; el admin ve todos
-      let consulta = supabase
-        .from("clips")
-        .select("id, title, game, video_url, uploaded_by, created_at");
-      if (miRol === "uploader") {
-        consulta = consulta.eq("uploaded_by", sesion.user.id);
-      }
-      const { data: c } = await consulta.order("created_at", {
-        ascending: false,
-      });
-      setClips((c as Clip[]) ?? []);
-
-      // Solo el admin carga la lista de usuarios
-      if (miRol === "admin") {
-        const { data: u } = await supabase
-          .from("profiles")
-          .select("id, email, display_name, avatar_url, role, created_at")
-          .order("created_at", { ascending: true });
-        setUsuarios((u as Usuario[]) ?? []);
-      }
+      const { data: u } = await supabase
+        .from("profiles")
+        .select("id, email, display_name, avatar_url, role, created_at")
+        .order("created_at", { ascending: true });
+      setUsuarios((u as Usuario[]) ?? []);
 
       setCargando(false);
     }
     iniciar();
   }, [router]);
-
-  async function borrarClip(clip: Clip) {
-    if (
-      !confirm(`¿Borrar "${clip.title}"? Esta acción no se puede deshacer.`)
-    ) {
-      return;
-    }
-    setOcupado(clip.id);
-    setAviso(null);
-
-    // 1) Borrar el registro (las reglas de la base de datos verifican el permiso)
-    const { data: borrados, error } = await supabase
-      .from("clips")
-      .delete()
-      .eq("id", clip.id)
-      .select("id");
-
-    if (error || !borrados || borrados.length === 0) {
-      setAviso({
-        tipo: "error",
-        texto: error?.message ?? "No tienes permiso para borrar este clip.",
-      });
-      setOcupado(null);
-      return;
-    }
-
-    // 2) Borrar el archivo de video
-    const { data: archivos, error: errorArchivo } = await supabase.storage
-      .from("clips")
-      .remove([clip.video_url]);
-
-    setClips((actual) => actual.filter((c) => c.id !== clip.id));
-
-    if (errorArchivo || !archivos || archivos.length === 0) {
-      setAviso({
-        tipo: "error",
-        texto:
-          "El clip se quitó de la galería, pero el archivo de video no se pudo eliminar. Revísalo en Supabase → Storage.",
-      });
-    } else {
-      setAviso({ tipo: "ok", texto: `"${clip.title}" fue eliminado.` });
-    }
-    setOcupado(null);
-  }
 
   async function cambiarRol(usuario: Usuario, nuevo: Rol) {
     if (usuario.id === miId || usuario.role === nuevo) return;
@@ -205,12 +129,6 @@ export default function Panel() {
     );
   }
 
-  const esAdmin = rol === "admin";
-  const nombrePorId: Record<string, string> = {};
-  for (const u of usuarios) {
-    nombrePorId[u.id] = u.display_name ?? u.email ?? "Sin nombre";
-  }
-
   return (
     <main className="min-h-screen">
       <header className="sticky top-0 z-20 border-b border-white/10 bg-[#040604]/95">
@@ -232,50 +150,43 @@ export default function Panel() {
           transition={{ duration: 0.4 }}
         >
           <h1 className="font-display text-5xl">
-            <span className="texto-degradado">
-              {esAdmin ? "PANEL ADMIN" : "MI PANEL"}
-            </span>
+            <span className="texto-degradado">PANEL ADMIN</span>
           </h1>
           <p className="mt-2 text-sm text-gray-400">
-            {esAdmin
-              ? "Administra los clips y los permisos de todas las personas."
-              : "Aquí puedes ver y borrar los clips que subiste."}
+            Permisos de las personas, video de TikTok y estado del sistema. Los
+            clips se borran desde la galería.
           </p>
         </motion.div>
 
         {/* Pestañas */}
         <div className="mt-6 flex flex-wrap gap-2">
           <button
-            onClick={() => setPestana("clips")}
+            onClick={() => setPestana("usuarios")}
             className={`chip inline-flex items-center gap-2 ${
-              pestana === "clips" ? "chip-activo" : ""
+              pestana === "usuarios" ? "chip-activo" : ""
             }`}
           >
-            <FaFilm />
-            {esAdmin ? "Todos los clips" : "Mis clips"} ({clips.length})
+            <FaUsers />
+            Usuarios ({usuarios.length})
           </button>
-          {esAdmin && (
-            <>
-              <button
-                onClick={() => setPestana("usuarios")}
-                className={`chip inline-flex items-center gap-2 ${
-                  pestana === "usuarios" ? "chip-activo" : ""
-                }`}
-              >
-                <FaUsers />
-                Usuarios ({usuarios.length})
-              </button>
-              <button
-                onClick={() => setPestana("tiktok")}
-                className={`chip inline-flex items-center gap-2 ${
-                  pestana === "tiktok" ? "chip-activo" : ""
-                }`}
-              >
-                <FaTiktok />
-                TikTok
-              </button>
-            </>
-          )}
+          <button
+            onClick={() => setPestana("tiktok")}
+            className={`chip inline-flex items-center gap-2 ${
+              pestana === "tiktok" ? "chip-activo" : ""
+            }`}
+          >
+            <FaTiktok />
+            TikTok
+          </button>
+          <button
+            onClick={() => setPestana("sistema")}
+            className={`chip inline-flex items-center gap-2 ${
+              pestana === "sistema" ? "chip-activo" : ""
+            }`}
+          >
+            <FaDatabase />
+            Sistema
+          </button>
         </div>
 
         {/* Aviso de resultado */}
@@ -291,52 +202,8 @@ export default function Panel() {
           </div>
         )}
 
-        {/* Lista de clips */}
-        {pestana === "clips" && (
-          <div className="mt-6 flex flex-col gap-3">
-            {clips.length === 0 ? (
-              <p className="py-12 text-center text-gray-400">
-                {esAdmin
-                  ? "No hay clips todavía."
-                  : "Todavía no has subido clips."}
-              </p>
-            ) : (
-              clips.map((clip) => (
-                <div
-                  key={clip.id}
-                  className="tarjeta flex flex-wrap items-center justify-between gap-4 rounded-xl p-4"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-semibold">{clip.title}</p>
-                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-400">
-                      {clip.game && (
-                        <span className="insignia">{clip.game}</span>
-                      )}
-                      <span>{fecha(clip.created_at)}</span>
-                      {esAdmin && (
-                        <span>
-                          · Subido por{" "}
-                          {nombrePorId[clip.uploaded_by] ?? "alguien"}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => borrarClip(clip)}
-                    disabled={ocupado === clip.id}
-                    className="inline-flex items-center gap-2 rounded-lg border border-red-500/40 px-3 py-2 text-sm text-red-400 transition hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <FaTrashCan />
-                    {ocupado === clip.id ? "Borrando..." : "Borrar"}
-                  </button>
-                </div>
-              ))
-            )}
-          </div>
-        )}
-
-        {/* Lista de usuarios (solo admin) */}
-        {esAdmin && pestana === "usuarios" && (
+        {/* Lista de usuarios */}
+        {pestana === "usuarios" && (
           <div className="mt-6 flex flex-col gap-3">
             {usuarios.map((u) => {
               const nombre = u.display_name ?? u.email ?? "Sin nombre";
@@ -380,8 +247,8 @@ export default function Panel() {
           </div>
         )}
 
-        {/* Video destacado de TikTok (solo admin) */}
-        {esAdmin && pestana === "tiktok" && <TikTokAdmin />}
+        {pestana === "tiktok" && <TikTokAdmin />}
+        {pestana === "sistema" && <SistemaAdmin />}
       </section>
     </main>
   );
