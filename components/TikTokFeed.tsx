@@ -1,24 +1,38 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { FaTiktok, FaRotateRight } from "react-icons/fa6";
+import { FaTiktok } from "react-icons/fa6";
+import { supabase } from "@/lib/supabase";
 import { TIKTOK_USUARIO } from "@/lib/config";
 
-const SCRIPT_URL = "https://www.tiktok.com/embed.js";
+// Saca el número del video desde el enlace completo de TikTok
+function extraerId(url: string | null) {
+  const m = url?.match(/tiktok\.com\/@[\w.]+\/video\/(\d+)/);
+  return m ? m[1] : null;
+}
 
 export default function TikTokFeed() {
-  // Solo letras, números, punto y guion bajo: así el usuario es seguro de insertar
+  // Solo letras, números, punto y guion bajo
   const usuario = TIKTOK_USUARIO.replace(/[^a-zA-Z0-9._]/g, "");
 
   const seccion = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);
-  const [intento, setIntento] = useState(0);
-  const [enEspera, setEnEspera] = useState(false);
+  const [videoId, setVideoId] = useState<string | null>(null);
 
-  // 1) No pedir nada a TikTok hasta que la sección se acerque a la pantalla
+  // 1) Leer el enlace que dejó guardado el admin
+  useEffect(() => {
+    supabase
+      .from("site_settings")
+      .select("value")
+      .eq("key", "tiktok_video_url")
+      .maybeSingle()
+      .then(({ data }) => setVideoId(extraerId(data?.value ?? null)));
+  }, []);
+
+  // 2) No cargar el video hasta que la sección se acerque a la pantalla
   useEffect(() => {
     const el = seccion.current;
-    if (!el || !usuario) return;
+    if (!el) return;
     const observador = new IntersectionObserver(
       ([entrada]) => {
         if (entrada.isIntersecting) {
@@ -30,37 +44,9 @@ export default function TikTokFeed() {
     );
     observador.observe(el);
     return () => observador.disconnect();
-  }, [usuario]);
+  }, []);
 
-  // 2) Cargar el script de TikTok con una pequeña espera (evita peticiones dobles)
-  useEffect(() => {
-    if (!visible || !usuario) return;
-    const temporizador = setTimeout(() => {
-      const script = document.createElement("script");
-      script.src = SCRIPT_URL;
-      script.async = true;
-      document.body.appendChild(script);
-    }, 400);
-    return () => clearTimeout(temporizador);
-  }, [visible, usuario, intento]);
-
-  function reintentar() {
-    setIntento((n) => n + 1);
-    setEnEspera(true);
-    setTimeout(() => setEnEspera(false), 15000);
-  }
-
-  if (!usuario) return null;
-
-  const html = `
-    <blockquote class="tiktok-embed" cite="https://www.tiktok.com/@${usuario}"
-      data-unique-id="${usuario}" data-embed-type="creator"
-      style="max-width: 780px; min-width: 288px;">
-      <section>
-        <a target="_blank" rel="noopener noreferrer"
-          href="https://www.tiktok.com/@${usuario}?refer=creator_embed">@${usuario}</a>
-      </section>
-    </blockquote>`;
+  if (!usuario && !videoId) return null;
 
   return (
     <section ref={seccion} className="mx-auto max-w-6xl px-6 pb-16 pt-10">
@@ -69,17 +55,7 @@ export default function TikTokFeed() {
           <span className="texto-degradado">TIKTOK</span>
         </h2>
 
-        <div className="flex flex-wrap items-center gap-3">
-          {visible && (
-            <button
-              onClick={reintentar}
-              disabled={enEspera}
-              className="inline-flex items-center gap-2 rounded-lg border border-white/20 px-4 py-2 text-sm transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <FaRotateRight />
-              {enEspera ? "Espera un momento..." : "Reintentar"}
-            </button>
-          )}
+        {usuario && (
           <a
             href={`https://www.tiktok.com/@${usuario}`}
             target="_blank"
@@ -88,19 +64,23 @@ export default function TikTokFeed() {
           >
             <FaTiktok /> Ver en TikTok
           </a>
-        </div>
+        )}
       </div>
 
       <div className="tarjeta flex min-h-[200px] justify-center rounded-2xl p-4">
-        {visible ? (
-          <div
-            key={intento}
-            className="flex w-full justify-center"
-            dangerouslySetInnerHTML={{ __html: html }}
+        {videoId && visible ? (
+          <iframe
+            src={`https://www.tiktok.com/player/v1/${videoId}?autoplay=1&loop=1&music_info=1&description=1`}
+            title="Video de TikTok"
+            allow="fullscreen; autoplay; encrypted-media"
+            loading="lazy"
+            className="h-[640px] w-full max-w-[360px] rounded-xl border-0"
           />
         ) : (
-          <p className="self-center text-sm text-gray-500">
-            El TikTok se carga al llegar aquí...
+          <p className="self-center text-center text-sm text-gray-500">
+            {videoId
+              ? "El video se carga al llegar aquí..."
+              : "Pronto habrá un clip destacado de TikTok aquí."}
           </p>
         )}
       </div>

@@ -4,10 +4,17 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
-import { FaArrowLeft, FaTrashCan, FaFilm, FaUsers } from "react-icons/fa6";
+import {
+  FaArrowLeft,
+  FaTrashCan,
+  FaFilm,
+  FaUsers,
+  FaTiktok,
+} from "react-icons/fa6";
 import { supabase } from "@/lib/supabase";
 import Logo from "@/components/Logo";
 import Avatar from "@/components/Avatar";
+import TikTokAdmin from "@/components/TikTokAdmin";
 
 type Rol = "admin" | "uploader" | "guest";
 
@@ -51,7 +58,9 @@ export default function Panel() {
   const [rol, setRol] = useState<Rol | null>(null);
   const [clips, setClips] = useState<Clip[]>([]);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
-  const [pestana, setPestana] = useState<"clips" | "usuarios">("clips");
+  const [pestana, setPestana] = useState<"clips" | "usuarios" | "tiktok">(
+    "clips"
+  );
   const [cargando, setCargando] = useState(true);
   const [aviso, setAviso] = useState<Aviso | null>(null);
   const [ocupado, setOcupado] = useState<string | null>(null);
@@ -155,7 +164,9 @@ export default function Panel() {
     const nombre = usuario.display_name ?? usuario.email ?? "esta persona";
     if (
       nuevo === "admin" &&
-      !confirm(`¿Dar permisos de ADMIN a ${nombre}? Podrá borrar todo y cambiar roles.`)
+      !confirm(
+        `¿Dar permisos de ADMIN a ${nombre}? Podrá borrar todo y cambiar roles.`
+      )
     ) {
       return;
     }
@@ -244,15 +255,26 @@ export default function Panel() {
             {esAdmin ? "Todos los clips" : "Mis clips"} ({clips.length})
           </button>
           {esAdmin && (
-            <button
-              onClick={() => setPestana("usuarios")}
-              className={`chip inline-flex items-center gap-2 ${
-                pestana === "usuarios" ? "chip-activo" : ""
-              }`}
-            >
-              <FaUsers />
-              Usuarios ({usuarios.length})
-            </button>
+            <>
+              <button
+                onClick={() => setPestana("usuarios")}
+                className={`chip inline-flex items-center gap-2 ${
+                  pestana === "usuarios" ? "chip-activo" : ""
+                }`}
+              >
+                <FaUsers />
+                Usuarios ({usuarios.length})
+              </button>
+              <button
+                onClick={() => setPestana("tiktok")}
+                className={`chip inline-flex items-center gap-2 ${
+                  pestana === "tiktok" ? "chip-activo" : ""
+                }`}
+              >
+                <FaTiktok />
+                TikTok
+              </button>
+            </>
           )}
         </div>
 
@@ -274,7 +296,9 @@ export default function Panel() {
           <div className="mt-6 flex flex-col gap-3">
             {clips.length === 0 ? (
               <p className="py-12 text-center text-gray-400">
-                {esAdmin ? "No hay clips todavía." : "Todavía no has subido clips."}
+                {esAdmin
+                  ? "No hay clips todavía."
+                  : "Todavía no has subido clips."}
               </p>
             ) : (
               clips.map((clip) => (
@@ -285,7 +309,9 @@ export default function Panel() {
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold">{clip.title}</p>
                     <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-400">
-                      {clip.game && <span className="insignia">{clip.game}</span>}
+                      {clip.game && (
+                        <span className="insignia">{clip.game}</span>
+                      )}
                       <span>{fecha(clip.created_at)}</span>
                       {esAdmin && (
                         <span>
@@ -353,6 +379,9 @@ export default function Panel() {
             })}
           </div>
         )}
+
+        {/* Video destacado de TikTok (solo admin) */}
+        {esAdmin && pestana === "tiktok" && <TikTokAdmin />}
       </section>
     </main>
   );
